@@ -12,7 +12,7 @@ pipeline {
         {
             steps {
                 script {
-                    sh "docker build -t ash2code/JavaScript-StopWatch ."
+                    sh "docker build -t ash2code/javascriptstopwatch ."
                 }   
             }
         }
@@ -20,7 +20,7 @@ pipeline {
         {
             steps {
                 script {
-                    sh "docker container run -dt -p 8083:80 ash2code/JavaScript-StopWatch"
+                    sh "docker container run -dt -p 8083:80 ash2code/javascript-stopwatch"
                 }
             }
         }

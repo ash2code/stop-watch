@@ -1,39 +1,56 @@
 pipeline {
     agent any
-
     stages {
-        stage("github clone")
-        {
+        stage("GitHub Clone") {
             steps {
                 git branch: 'main', url: 'https://github.com/ash2code/stop-watch.git'
             }
         }
-        stage("build docker image")
-        {
+        stage("Build Docker Image") {
             steps {
                 script {
                     sh "docker build -t ash2code/javascriptstopwatch ."
                 }   
             }
         }
-        stage("docker container run")
-        {
+        stage("Run Docker Container") {
             steps {
                 script {
-                    sh "docker container run -dt -p 8083:80 ash2code/javascript-stopwatch"
+                    // Stop and remove existing container if it exists
+                    sh '''
+                        docker container stop javascriptstopwatch || true
+                        docker container rm javascriptstopwatch || true
+                        docker container run -dt --name javascriptstopwatch -p 8083:80 ash2code/javascriptstopwatch
+                    '''
                 }
             }
         }
-        stage("docker login")
-        {
+        stage("Docker Login & Push") {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: '4cd9fdf1-94c8-4622-a734-6d0ae950198f', usernameVariable: ‘DOCKER_USERNAME’, passwordVariable: ‘DOCKER_PASSWORD’)]) 
-                    {
-                         echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                    withCredentials([usernamePassword(credentialsId: '4cd9fdf1-94c8-4622-a734-6d0ae950198f', 
+                                                   usernameVariable: 'DOCKER_USERNAME', 
+                                                   passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh '''
+                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                            docker push ash2code/javascriptstopwatch
+                        '''
                     } 
                 }
             }
+        }
+    }
+    
+    post {
+        always {
+            // Clean up workspace
+            cleanWs()
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+        success {
+            echo 'Pipeline completed successfully!'
         }
     }
 }
